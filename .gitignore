@@ -49,4 +49,5 @@ Temporary Items
 # Built binary
 gpu
 
-# Object files *.o 
+# Object files
+*.o 
