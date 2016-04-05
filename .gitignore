@@ -51,3 +51,4 @@ gpu
 
 # Object files
 *.o 
+reduction.pdf
