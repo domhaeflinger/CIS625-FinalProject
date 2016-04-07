@@ -7,6 +7,7 @@
 #define NUM_THREADS 256
 
 // from https://docs.nvidia.com/cuda/samples/6_Advanced/reduction/doc/reduction.pdf
+// TODO edit to handle struct/tree
 template <unsigned int blockSize>
 __device__ void warpReduce(volatile int *sdata, unsigned int tid) {
   if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
@@ -38,18 +39,16 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 // end from
 
 // generate graph/distance matrix
+__device__ void randomDistance(){
 
+}
+
+__global__ void generateEdge(){
+  
+}
 
 int main() {
 
 
   return 0;
 }
-
-/*
-  struct edge
-    int tree1
-    int tree2
-    double distance
-
-*/
