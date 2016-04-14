@@ -1,3 +1,4 @@
+
 COMMON_FLAGS=-O3 -arch=compute_30 -code=sm_30
 
 CC=nvcc
@@ -6,7 +7,7 @@ NVCCFLAGS=${COMMON_FLAGS}
 LIBS=
 
 # Update OUTPUT_PATTERNS later to match any kind of output from running the application
-OUTPUT_PATTERNS=
+OUTPUT_PATTERNS= *.stdout *.java
 
 TARGETS=gpu
 
@@ -21,5 +22,7 @@ gpu: gpu.o
 	${CC} -o $@ ${NVCCLIBS} gpu.o
 
 # Generation of any object files
-gpu.o: gpu.cu
+gpu.o: gpu.cu common.h
 	${CC} -c ${NVCCFLAGS} gpu.cu
+common.o: common.cu common.h
+	${CC} -c ${NVCCFLAGS} common.cu

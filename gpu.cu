@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cuda.h>
+#include <curand.h>
+#include "common.h"
 
 #define NUM_THREADS 256
 
@@ -38,17 +40,85 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 }
 // end from
 
-// generate graph/distance matrix
-__device__ void randomDistance(){
+// Calculate the position in the matrix
+__global__ void calcPosInMatrix(){
 
 }
 
-__global__ void generateEdge(){
-  
+// Calcuate edges between all points
+__global__ void calculateEdge(){
+
 }
 
-int main() {
 
+// main duh
+int main(int argc, char **argv) {
+
+  cudaThreadSynchronize();
+
+  if( find_option( argc, argv, "-h" ) >= 0 )
+  {
+      printf( "Options:\n" );
+      printf( "-h to see this help\n" );
+      printf( "-n <int> to set the number of particles\n" );
+      printf( "-o <filename> to specify the output file name\n" );
+      printf( "-s <filename> to specify the summary output file name\n" );
+      return 0;
+  }
+
+  int n = read_int(argc, argv, "-n", 1000);
+
+  char *savename = read_string(argc, argv, "-o", NULL);
+  char *sumname = read_string(argc, argv, "-s", NULL);
+
+  FILE *fsave = savename ? fopen(savename, "w") : NULL;
+  FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
+
+  // GPU point data tructure
+  edge_t * d_edges;
+  cudaMalloc((void **) &d_edges, n * (sizeof(point_t) + (n - 1) * sizeof(edge_t)));
+  // GPU point data structure
+  point_t * d_points = edges + (n * (n-1) * sizeof(edge_t));
+
+  double init_time = read_timer();
+  // Initialize points
+  curandGenerator_t gen; // Random number generator
+  curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT); // Initialize generator
+  curandSetPseudoRandomGeneratorSeed(gen, 1234ULL); // Set generator's seed
+  curandGenerateUniform(gen, d_points, n); // Generate n random numbers in d_points
+
+  // Initialize edges
+  // TODO init edges
+
+  cudaThreadSynchronize();
+  init_time = read_timer() - init_time;
+  double reduce_time = read_timer();
+
+  // Calculate tree
+  // TODO Calc tree
+
+  cudaThreadSynchronize();
+  reduce_time = read_timer() - reduce_time;
+
+  printf("Initialization time = %g seconds\n", init_time);
+  printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
+
+  if (fsum)
+  {
+    fprintf(fsum, "%d %lf \n", n, reduce_time);
+  }
+
+  if (fsum)
+  {
+    fclose(fsum);
+  }
+
+  cudaFree(d_edges);
+
+  if (fsave)
+  {
+    fclose(fsave);
+  }
 
   return 0;
 }
