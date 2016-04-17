@@ -52,3 +52,4 @@ gpu
 # Object files
 *.o 
 reduction.pdf
+pull.sh
