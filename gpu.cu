@@ -42,7 +42,7 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 
 // Calculates x position in matrix
 __device__ void calcXPos(int adjIndex, int adjN, int *x){
-  x = (int*) floor(adjN - sqrt(pow(adjN, 2) - adjIndex));
+  &x = (int) floor(adjN - sqrt(pow(adjN, 2) - adjIndex));
 }
 
 // Calculate the position in the matrix
