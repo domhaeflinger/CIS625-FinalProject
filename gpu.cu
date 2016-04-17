@@ -83,14 +83,14 @@ int main(int argc, char **argv) {
   edge_t * d_edges;
   cudaMalloc((void **) &d_edges, n * (sizeof(point_t) + (n - 1) * sizeof(edge_t)));
   // GPU point data structure
-  point_t * d_points = d_edges + (n * (n-1) * sizeof(edge_t));
+  point_t * d_points = (point_t)((void *) d_edges + (n * (n-1) * sizeof(edge_t)));
 
   double init_time = read_timer();
   // Initialize points
   curandGenerator_t gen; // Random number generator
   curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT); // Initialize generator
   curandSetPseudoRandomGeneratorSeed(gen, 1234ULL); // Set generator's seed
-  curandGenerateUniform(gen, d_points, n); // Generate n random numbers in d_points
+  curandGenerateUniform(gen, (float*)d_points, n); // Generate n random numbers in d_points
 
   // Initialize edges
   // TODO init edges

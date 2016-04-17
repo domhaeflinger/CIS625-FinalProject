@@ -3,6 +3,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#define DIM 2
+
 //
 // Structs
 //

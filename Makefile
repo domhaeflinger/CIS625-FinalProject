@@ -1,5 +1,5 @@
 
-COMMON_FLAGS=-O3 -arch=compute_30 -code=sm_30
+COMMON_FLAGS=-O3 -arch=compute_30 -code=sm_30 -use_fast_math
 
 CC=nvcc
 CFLAGS=${COMMON_FLAGS}
