@@ -40,9 +40,14 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 }
 // end from
 
-// Calculate the position in the matrix
-__global__ void calcPosInMatrix(){
+// Calculates x position in matrix
+__device__ void calcXPos(int adjIndex, int adjN, int *x){
+  x = floor(adjn - sqrtf(powerf(adjN, 2) - adjIndex));
+}
 
+// Calculate the position in the matrix
+__global__ void calcPosInMatrix(int index, int n, int *x, int *y){
+  calcXPos(index * 2, n - (1/2), &x);
 }
 
 // Calcuate edges between all points
