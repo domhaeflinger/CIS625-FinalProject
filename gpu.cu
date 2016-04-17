@@ -42,7 +42,7 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 
 // Calculates x position in matrix
 __device__ void calcXPos(int adjIndex, int adjN, int *x){
-  x = floor(adjN - sqrtf(powerf(adjN, 2) - adjIndex));
+  x = (int) floor(adjN - sqrt(pow(adjN, 2) - adjIndex));
 }
 
 // Calculate the position in the matrix
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
   edge_t * d_edges;
   cudaMalloc((void **) &d_edges, n * (sizeof(point_t) + (n - 1) * sizeof(edge_t)));
   // GPU point data structure
-  point_t * d_points = (point_t)((void *) d_edges + (n * (n-1) * sizeof(edge_t)));
+  point_t * d_points = (point_t *)(((void *) d_edges) + (n * (n-1) * sizeof(edge_t)));
 
   double init_time = read_timer();
   // Initialize points
