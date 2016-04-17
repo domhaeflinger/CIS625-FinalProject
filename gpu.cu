@@ -78,7 +78,10 @@ int main(int argc, char **argv) {
   char *sumname = read_string(argc, argv, "-s", NULL);
 
   FILE *fsave = savename ? fopen(savename, "w") : NULL;
-  FILE *fsum = sumname ? fopen(sumname, "a") : NULL;*/
+  FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
+  */
+
+  int n = DIM;
 
   // GPU point data tructure
   edge_t * d_edges;
