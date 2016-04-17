@@ -24,7 +24,8 @@ double read_timer( )
 //
 //  I/O routines
 //
-void save( FILE *f, int n, particle_t *p )
+/*
+void save( FILE *f, int n, point_t *p )
 {
     static bool first = true;
     if( first )
@@ -35,6 +36,7 @@ void save( FILE *f, int n, particle_t *p )
     for( int i = 0; i < n; i++ )
         fprintf( f, "%g %g\n", p[i].x, p[i].y );
 }
+*/
 
 //
 //  command line option processing
