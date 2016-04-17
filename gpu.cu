@@ -109,8 +109,8 @@ int main(int argc, char **argv) {
   cudaThreadSynchronize();
   //reduce_time = read_timer() - reduce_time;
 
-  printf("Initialization time = %g seconds\n", init_time);
-  printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
+  //printf("Initialization time = %g seconds\n", init_time);
+  //printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
 
   /*
   if (fsum)
