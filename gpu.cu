@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   // GPU point data structure
   point_t * d_points = (point_t *)(((void *) d_edges) + (n * (n-1) * sizeof(edge_t)));
 
-  double init_time = read_timer();
+  //double init_time = read_timer();
   // Initialize points
   curandGenerator_t gen; // Random number generator
   //curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT); // Initialize generator
@@ -100,14 +100,14 @@ int main(int argc, char **argv) {
   // TODO init edges
 
   cudaThreadSynchronize();
-  init_time = read_timer() - init_time;
-  double reduce_time = read_timer();
+  //init_time = read_timer() - init_time;
+  //double reduce_time = read_timer();
 
   // Calculate tree
   // TODO Calc tree
 
   cudaThreadSynchronize();
-  reduce_time = read_timer() - reduce_time;
+  //reduce_time = read_timer() - reduce_time;
 
   printf("Initialization time = %g seconds\n", init_time);
   printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
