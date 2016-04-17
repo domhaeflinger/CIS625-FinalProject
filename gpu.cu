@@ -36,13 +36,13 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
   if (blockSize >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; } __syncthreads(); }
 
   if(tid < 32) warpReduce(sdata, tid);
-  if(tid == 0 ) g_odata[blockIdxx] = sdata[0];
+  if(tid == 0 ) g_odata[blockIdx.x] = sdata[0];
 }
 // end from
 
 // Calculates x position in matrix
 __device__ void calcXPos(int adjIndex, float adjN, int *x){
-  &x = (int) floor(adjN - sqrt(pow(adjN, 2) - adjIndex));
+  //(&x) = (int) floor(adjN - sqrt(pow(adjN, 2) - adjIndex));
 }
 
 // Calculate the position in the matrix
@@ -61,6 +61,7 @@ int main(int argc, char **argv) {
 
   cudaThreadSynchronize();
 
+  /*
   if( find_option( argc, argv, "-h" ) >= 0 )
   {
       printf( "Options:\n" );
@@ -77,7 +78,7 @@ int main(int argc, char **argv) {
   char *sumname = read_string(argc, argv, "-s", NULL);
 
   FILE *fsave = savename ? fopen(savename, "w") : NULL;
-  FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
+  FILE *fsum = sumname ? fopen(sumname, "a") : NULL;*/
 
   // GPU point data tructure
   edge_t * d_edges;
@@ -108,6 +109,7 @@ int main(int argc, char **argv) {
   printf("Initialization time = %g seconds\n", init_time);
   printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
 
+  /*
   if (fsum)
   {
     fprintf(fsum, "%d %lf \n", n, reduce_time);
@@ -124,6 +126,7 @@ int main(int argc, char **argv) {
   {
     fclose(fsave);
   }
+  */
 
   return 0;
 }
