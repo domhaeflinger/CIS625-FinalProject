@@ -13,7 +13,7 @@ typedef struct edge_t{
 } edge_t;
 
 typedef struct point_t {
-  double coordinates[DIM];
+  float coordinates[DIM];
 } point_t;
 
 //
