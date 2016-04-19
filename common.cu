@@ -1,5 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
+#include <float.h>
+#include <string.h>
+#include <math.h>
 #include <time.h>
 #include <sys/time.h>
 #include "common.h"
@@ -24,7 +28,6 @@ double read_timer( )
 //
 //  I/O routines
 //
-/*
 void save( FILE *f, int n, point_t *p )
 {
     static bool first = true;
@@ -36,7 +39,6 @@ void save( FILE *f, int n, point_t *p )
     for( int i = 0; i < n; i++ )
         fprintf( f, "%g %g\n", p[i].x, p[i].y );
 }
-*/
 
 //
 //  command line option processing

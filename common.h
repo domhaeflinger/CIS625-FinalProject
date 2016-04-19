@@ -8,7 +8,7 @@
 //
 // Structs
 //
-typedef struct edge_t{
+typedef struct edge_t {
   unsigned short tree1;
   unsigned short tree2;
   float distance;

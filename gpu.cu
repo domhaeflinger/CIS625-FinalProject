@@ -41,13 +41,24 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 // end from
 
 // Calculates x position in matrix
-__device__ void calcXPos(int adjIndex, float adjN, int *x){
-  //(&x) = (int) floor(adjN - sqrt(pow(adjN, 2) - adjIndex));
+__device__ void calcXPos(int *x, int adjIndex, float adjN){
+  x = (int)(floor(adjN - sqrt(pow(adjN, 2) - adjIndex)));
+}
+
+// Calculates y position in matrix
+__device__ void calcYPos(int *y, int adjIndex, float adjN, int x){
+  y = (int)(adjIndex + (x * (x + adjN)) / 2);
+}
+
+// Calculates index in array from position in matrix
+__device__ void calcArrayIndex(int *index, int adjN, int adjY, int x){
+  index = (int)((x * (adjN - x) + adjY) / 2);
 }
 
 // Calculate the position in the matrix
 __global__ void calcPosInMatrix(int index, int n, int *x, int *y){
-  calcXPos(index * 2, n - (.5f), x);
+  calcXPos(x, index * 2, n - (.5f));
+  calcYPos(y, index + 1, 3 - 2 * n, &x);
 }
 
 // Calcuate edges between all points
