@@ -6,6 +6,7 @@
 #include <curand.h>
 #include "common.h"
 
+#define NUM_BLOCKS 256
 #define NUM_THREADS 256
 
 // from https://docs.nvidia.com/cuda/samples/6_Advanced/reduction/doc/reduction.pdf
@@ -42,27 +43,27 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 
 // Calculates x position in matrix
 __device__ void calcXPos(int *x, int adjIndex, float adjN){
-  x = (int)(floor(adjN - sqrt(pow(adjN, 2) - adjIndex)));
+  &x = (int)(floor(adjN - sqrt(pow(adjN, 2) - adjIndex)));
 }
 
 // Calculates y position in matrix
 __device__ void calcYPos(int *y, int adjIndex, float adjN, int x){
-  y = (int)(adjIndex + (x * (x + adjN)) / 2);
+  &y = (int)(adjIndex + (x * (x + adjN)) / 2);
 }
 
 // Calculates index in array from position in matrix
 __device__ void calcArrayIndex(int *index, int adjN, int adjY, int x){
-  index = (int)((x * (adjN - x) + adjY) / 2);
+  &index = (int)((x * (adjN - x) + adjY) / 2);
 }
 
 // Calculate the position in the matrix
 __global__ void calcPosInMatrix(int index, int n, int *x, int *y){
   calcXPos(x, index * 2, n - (.5f));
-  calcYPos(y, index + 1, 3 - 2 * n, &x);
+  calcYPos(y, index + 1, 3 - 2 * n, x);
 }
 
 // Calcuate edges between all points
-__global__ void calculateEdge(){
+__global__ void calculateEdge(edge_t* edges, point_t* points, int n){
 
 }
 
@@ -108,7 +109,7 @@ int main(int argc, char **argv) {
   //curandGenerateUniform(&gen, (float*)d_points, n); // Generate n random numbers in d_points
 
   // Initialize edges
-  // TODO init edges
+  calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, n);
 
   cudaThreadSynchronize();
   //init_time = read_timer() - init_time;
