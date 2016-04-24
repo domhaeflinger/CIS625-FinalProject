@@ -33,11 +33,11 @@ void save( FILE *f, int n, point_t *p )
     static bool first = true;
     if( first )
     {
-        fprintf( f, "%d %g\n", n, size );
+        fprintf( f, "%d\n", n );
         first = false;
     }
     for( int i = 0; i < n; i++ )
-        fprintf( f, "%g %g\n", p[i].x, p[i].y );
+        fprintf( f, "%g %g\n", p[i].coordinates[0], p[i].coordinates[1]);
 }
 
 //
