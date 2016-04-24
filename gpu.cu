@@ -59,7 +59,7 @@ __device__ void calcArrayIndex(int *index, int adjN, int adjY, int x){
 // Calculate the position in the matrix
 __global__ void calcPosInMatrix(int index, int n, int *x, int *y){
   calcXPos(x, index * 2, n - (.5f));
-  calcYPos(y, index + 1, 3 - 2 * n, &x);
+  calcYPos(y, index + 1, 3 - 2 * n, *x);
 }
 
 // Calcuate edges between all points
