@@ -18,10 +18,8 @@ clean:
 	rm -f *.o ${TARGETS} ${OUTPUT_PATTERNS}
 
 # Generation of any binaries
-gpu: gpu.o
-	${CC} -o $@ ${NVCCLIBS} gpu.o
-common: common.o
-	${CC} -o $@ ${NVCCLIBS} common.o
+gpu: gpu.o common.o
+	${CC} -o $@ ${NVCCLIBS} gpu.o common.o
 
 # Generation of any object files
 gpu.o: gpu.cu common.h
