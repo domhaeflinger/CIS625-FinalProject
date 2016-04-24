@@ -49,7 +49,7 @@ __global__ void reduce(edge_t* src, edge_t* dest, int ne){
 
   edge_t* left = &src[tid * 2];
   edge_t* right = left + 1;
-  *(dest[tid]) = left->distance < right->distance ? *left : *right;
+  *(dest[tid]) = ((left->distance < right->distance) ? (*left) : (*right));
 }
 
 // Calculates x position in matrix
