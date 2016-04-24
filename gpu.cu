@@ -43,13 +43,13 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 // end from
 
 // Calculates x position in matrix
-__device__ void calcXPos(int *x, int adjIndex, float adjN){
-  *x = (int)(floor(adjN - sqrt(pow(adjN, 2) - adjIndex)));
+__device__ void calcXPos(unsigned short *x, int adjIndex, float adjN){
+  *x = (unsigned short)(floor(adjN - sqrt(pow(adjN, 2) - adjIndex)));
 }
 
 // Calculates y position in matrix
-__device__ void calcYPos(int *y, int adjIndex, float adjN, int x){
-  *y = (int)(adjIndex + (x * (x + adjN)) / 2);
+__device__ void calcYPos(unsigned short *y, int adjIndex, float adjN, int x){
+  *y = (unsigned short)(adjIndex + (x * (x + adjN)) / 2);
 }
 
 // Calculates index in array from position in matrix
