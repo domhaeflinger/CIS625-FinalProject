@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
   for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
     int numEdgesRed = (n * n - n) / 2;
     reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed);
-    for(; numEdgesRed >= 4; numEdgesRed / 4){
+    for(; numEdgesRed >= 4; numEdgesRed /= 4){
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (half, quarter, numEdgesRed / 2);
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (quarter, half, numEdgesRed / 4);
     }
