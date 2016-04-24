@@ -21,6 +21,9 @@ clean:
 gpu: gpu.o
 	${CC} -o $@ ${NVCCLIBS} gpu.o
 
+common: common.o
+	${CC} -o $@ ${NVCCLIBS} common.o
+
 # Generation of any object files
 gpu.o: gpu.cu common.h
 	${CC} -c ${NVCCFLAGS} gpu.cu
