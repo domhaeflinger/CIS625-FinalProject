@@ -111,9 +111,9 @@ int main(int argc, char **argv) {
 
   // GPU point data tructure
   edge_t * d_edges;
-  cudaMalloc((void **) &d_edges, n * (sizeof(point_t) + (n - 1) * sizeof(edge_t)));
+  cudaMalloc((void **) &d_edges, 7 * (n * n - n));
   // GPU point data structure
-  point_t * d_points = (point_t *)(((void *) d_edges) + (n * (n-1) * sizeof(edge_t)));
+  point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n)));
 
   double init_time = read_timer();
   // Initialize points
@@ -129,14 +129,13 @@ int main(int argc, char **argv) {
   init_time = read_timer() - init_time;
   //double reduce_time = read_timer();
 
-
   // Calculate tree
   // TODO Calc tree
 
   cudaThreadSynchronize();
   //reduce_time = read_timer() - reduce_time;
 
-  //printf("Initialization time = %g seconds\n", init_time);
+  printf("Initialization time = %g seconds\n", init_time);
   //printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
 
   /*
