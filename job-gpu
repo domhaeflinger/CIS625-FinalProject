@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH -A TG-CCR140008
+#SBATCH -J gpu
+#SBATCH -o particle-gpu.stdout
+#SBATCH -n 1
+#SBATCH -p gpudev
+#SBATCH -t 00:10:00
+
+ibrun ./gpu

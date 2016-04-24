@@ -81,6 +81,7 @@ __global__ void calculateEdge(edge_t* edges, point_t* points, int n){
   }
   e->distance = sqrt(sum);
   printf("tid: %d - e->1: %f - e->2: %f - e->d: %f\n",tid, e->tree1, e->tree2, e->distance);
+  printf("\txp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f")
 }
 
 // main duh
@@ -88,7 +89,6 @@ int main(int argc, char **argv) {
 
   cudaThreadSynchronize();
 
-  /*
   if( find_option( argc, argv, "-h" ) >= 0 )
   {
       printf( "Options:\n" );
@@ -106,7 +106,6 @@ int main(int argc, char **argv) {
 
   FILE *fsave = savename ? fopen(savename, "w") : NULL;
   FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
-  */
 
   int n = 3;
 
@@ -127,7 +126,7 @@ int main(int argc, char **argv) {
   calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, n);
 
   cudaThreadSynchronize();
-  //init_time = read_timer() - init_time;
+  init_time = read_timer() - init_time;
   //double reduce_time = read_timer();
 
 
@@ -150,6 +149,7 @@ int main(int argc, char **argv) {
   {
     fclose(fsum);
   }
+  */
 
   cudaFree(d_edges);
 
@@ -157,7 +157,6 @@ int main(int argc, char **argv) {
   {
     fclose(fsave);
   }
-  */
 
   return 0;
 }
