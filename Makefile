@@ -9,7 +9,7 @@ LIBS=
 # Update OUTPUT_PATTERNS later to match any kind of output from running the application
 OUTPUT_PATTERNS= *.stdout
 
-TARGETS=gpu common
+TARGETS=gpu
 
 # These can stay the same
 all:	${TARGETS}
