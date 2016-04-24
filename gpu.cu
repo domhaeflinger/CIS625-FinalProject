@@ -58,16 +58,30 @@ __device__ void calcArrayIndex(int *index, int adjN, int adjY, int x){
 }
 
 // Calculate the position in the matrix
-__global__ void calcPosInMatrix(int index, int n, int *x, int *y){
+__device__ void calcPosInMatrix(int index, int n, int *x, int *y){
   calcXPos(x, index * 2, n - (.5f));
   calcYPos(y, index + 1, 3 - 2 * n, *x);
 }
 
 // Calcuate edges between all points
 __global__ void calculateEdge(edge_t* edges, point_t* points, int n){
+  // Thread id
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (tid >= n) return;
 
+  edge_t *e = &edges[tid];
+  calcPosInMatrix(tid, n, &(e->tree1), &(e->tree2));
+  point_t *xp = &points[(e->tree1)];
+  point_t *yp = &points[(e->tree2)];
+
+  float sum = 0;
+  for (int i = 0; i < DIM; i++) {
+    float delta = xp->coordinates[i] - yp->coordinates[i];
+    sum += delta * delta;
+  }
+  e->distance = sqrt(sum);
+  printf("tid: %d - e->1: %f - e->2: %f - e->d: %f\n",tid, e->tree1, e->tree2, e->distance);
 }
-
 
 // main duh
 int main(int argc, char **argv) {
@@ -94,7 +108,7 @@ int main(int argc, char **argv) {
   FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
   */
 
-  int n = DIM;
+  int n = 3;
 
   // GPU point data tructure
   edge_t * d_edges;
@@ -115,6 +129,7 @@ int main(int argc, char **argv) {
   cudaThreadSynchronize();
   //init_time = read_timer() - init_time;
   //double reduce_time = read_timer();
+
 
   // Calculate tree
   // TODO Calc tree
