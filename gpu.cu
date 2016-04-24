@@ -49,7 +49,7 @@ __global__ void reduce(edge_t* src, edge_t* dest, int ne){
 
   edge_t* left = &src[tid * 2];
   edge_t* right = left + 1;
-  *dest[tid] = left->distance < right->distance ? *left : *right;
+  *(dest[tid]) = left->distance < right->distance ? *left : *right;
 }
 
 // Calculates x position in matrix
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   // GPU point data structure
   point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n));
   edge_t* half = (edge_t*)d_points;
-  edge_t* quarter = (edge_t)(((void*)half) + 2 * (n * n - n));
+  edge_t* quarter = (edge_t*)(((void*)half) + 2 * (n * n - n));
 
   double init_time = read_timer();
   // Initialize points
