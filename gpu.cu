@@ -142,11 +142,11 @@ int main(int argc, char **argv) {
   // Initialize points
   curandGenerator_t gen; // Random number generator
   curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT); // Initialize generator
-  curandSetPseudoRandomGeneratorSeed(gen, 1234ULL); // Set generator's seed
+  curandSetPseudoRandomGeneratorSeed(gen, time(NULL)); // Set generator's seed
   curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
 
   // Initialize edges
-  calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, n);
+  calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, (n * n - n)/ 2);
 
   cudaThreadSynchronize();
   init_time = read_timer() - init_time;
