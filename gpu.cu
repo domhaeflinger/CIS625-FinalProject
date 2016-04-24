@@ -88,7 +88,7 @@ __device__ void calcPosInMatrix(int index, int n, unsigned short *x, unsigned sh
 __global__ void calculateEdge(edge_t* edges, point_t* points, int n){
   // Thread id
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (tid >= n) return;
+  if (tid >= (n * n - n) / 2) return;
 
   edge_t *e = &edges[tid];
   calcPosInMatrix(tid, n, &(e->tree1), &(e->tree2));
@@ -101,7 +101,7 @@ __global__ void calculateEdge(edge_t* edges, point_t* points, int n){
     sum += delta * delta;
   }
   e->distance = sqrt(sum);
-  printf("tid: %d - e->1: %d - e->2: %d - e->d: %f\n\txp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f",
+  printf("tid: %d - e->1: %d - e->2: %d - e->d: %f\n\txp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f\n",
           tid, e->tree1, e->tree2, e->distance, xp->coordinates[0], xp->coordinates[1], yp->coordinates[0], yp->coordinates[1]);
 }
 
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
   curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
 
   // Initialize edges
-  calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, (n * n - n)/ 2);
+  calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, n);
 
   cudaThreadSynchronize();
   init_time = read_timer() - init_time;
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
       reduce <<< 1, 1 >>> (half, half, 2);
     }
     cudaMemcpy((void*)smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
-    printf("Smallest %d: %f", numEdgesSel, smallest->distance);
+    printf("Smallest %d: %f\n", numEdgesSel, smallest->distance);
     break;
   }
 
