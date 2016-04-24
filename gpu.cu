@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
   edge_t * d_edges;
   cudaMalloc((void **) &d_edges, 7 * (n * n - n));
   // GPU point data structure
-  point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n)));
+  point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n));
 
   double init_time = read_timer();
   // Initialize points
