@@ -81,7 +81,7 @@ __global__ void calculateEdge(edge_t* edges, point_t* points, int n){
   }
   e->distance = sqrt(sum);
   printf("tid: %d - e->1: %d - e->2: %d - e->d: %f\n",tid, e->tree1, e->tree2, e->distance);
-  printf("\txp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f", xp->x, xp->y, yp->x, yp->y);
+  printf("\txp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f", xp->coordinates[0], xp->coordinates[1], yp->coordinates[0], yp->coordinates[1]);
 }
 
 // main duh
