@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   // GPU point data structure
   point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n));
   edge_t* half = (edge_t*)d_points;
-  edge_t* quarter = ((void*)half) + 2 * (n * n - n);
+  edge_t* quarter = (edge_t)(((void*)half) + 2 * (n * n - n));
 
   double init_time = read_timer();
   // Initialize points
@@ -142,10 +142,10 @@ int main(int argc, char **argv) {
   double reduce_time = read_timer();
 
   // Reduce tree
-  edge_t* smallest = malloc(sizeof(edge_t));
+  edge_t* smallest = (edge_t*)malloc(sizeof(edge_t));
   for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
     int numEdgesRed = (n * n - n) / 2;
-    reduce <<< NUM_BLOCKS, NUM_THREADS >>> (edges, half, numEdgesRed);
+    reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed);
     for(; numEdgesRed >= 4; numEdgesRed / 4){
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (half, quarter, numEdgesRed / 2);
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (quarter, half, numEdgesRed / 4);
