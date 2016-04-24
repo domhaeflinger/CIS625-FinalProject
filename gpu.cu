@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <curand.h>
-#include <curand_kernal.h>
+#include <curand_kernel.h>
 #include "common.h"
 
 #define NUM_BLOCKS 256
