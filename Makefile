@@ -4,6 +4,7 @@ COMMON_FLAGS=-O3 -arch=compute_30 -code=sm_30
 CC=nvcc
 CFLAGS=${COMMON_FLAGS}
 NVCCFLAGS=${COMMON_FLAGS}
+NVCCLIBS=-lcurand
 LIBS=
 
 # Update OUTPUT_PATTERNS later to match any kind of output from running the application
