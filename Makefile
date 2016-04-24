@@ -9,7 +9,7 @@ LIBS=
 # Update OUTPUT_PATTERNS later to match any kind of output from running the application
 OUTPUT_PATTERNS= *.stdout
 
-TARGETS=gpu
+TARGETS=gpu common
 
 # These can stay the same
 all:	${TARGETS}
@@ -20,7 +20,6 @@ clean:
 # Generation of any binaries
 gpu: gpu.o
 	${CC} -o $@ ${NVCCLIBS} gpu.o
-
 common: common.o
 	${CC} -o $@ ${NVCCLIBS} common.o
 
