@@ -42,6 +42,16 @@ __global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
 }
 // end from
 
+__global__ void reduce(edge_t* src, edge_t* dest, int ne){
+  // Thread id
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (tid >= ne) return;
+
+  edge_t* left = &src[tid * 2];
+  edge_t* right = left + 1;
+  *dest[tid] = left->distance < right->distance ? *left : *right;
+}
+
 // Calculates x position in matrix
 __device__ void calcXPos(unsigned short *x, int adjIndex, float adjN){
   *x = (unsigned short)(floor(adjN - sqrt(pow(adjN, 2) - adjIndex)));
@@ -114,6 +124,8 @@ int main(int argc, char **argv) {
   cudaMalloc((void **) &d_edges, 7 * (n * n - n));
   // GPU point data structure
   point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n));
+  edge_t* half = (edge_t*)d_points;
+  edge_t* quarter = ((void*)half) + 2 * (n * n - n);
 
   double init_time = read_timer();
   // Initialize points
@@ -127,16 +139,34 @@ int main(int argc, char **argv) {
 
   cudaThreadSynchronize();
   init_time = read_timer() - init_time;
-  //double reduce_time = read_timer();
+  double reduce_time = read_timer();
 
-  // Calculate tree
-  // TODO Calc tree
+  // Reduce tree
+  edge_t* smallest = malloc(sizeof(edge_t));
+  for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
+    int numEdgesRed = (n * n - n) / 2;
+    reduce <<< NUM_BLOCKS, NUM_THREADS >>> (edges, half, numEdgesRed);
+    for(; numEdgesRed >= 4; numEdgesRed / 4){
+      reduce <<< NUM_BLOCKS, NUM_THREADS >>> (half, quarter, numEdgesRed / 2);
+      reduce <<< NUM_BLOCKS, NUM_THREADS >>> (quarter, half, numEdgesRed / 4);
+    }
+
+    if(numEdgesRed == 3){ // 3 elements in half
+      reduce <<< 1, 1 >>> (half + 1, half + 1, 2);
+    }
+    if(numEdgesRed == 2){ // 2 elements in half
+      reduce <<< 1, 1 >>> (half, half, 2);
+    }
+    cudaMemcpy((void*)smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
+    printf("Smallest %d: %f", numEdgesSel, smallest->distance);
+    break;
+  }
 
   cudaThreadSynchronize();
-  //reduce_time = read_timer() - reduce_time;
+  reduce_time = read_timer() - reduce_time;
 
   printf("Initialization time = %g seconds\n", init_time);
-  //printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
+  printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
 
   /*
   if (fsum)

@@ -6,4 +6,4 @@
 #SBATCH -p gpudev
 #SBATCH -t 00:10:00
 
-ibrun ./gpu -n 4
+ibrun ./gpu -n 3
