@@ -1,4 +1,4 @@
-// Joshua Donnoe, Kyle Evens, and Dominik Haeflinger
+// Joshua Donnoe, Kyle Evans, and Dominik Haeflinger
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,62 +10,29 @@
 #define NUM_BLOCKS 256
 #define NUM_THREADS 256
 
-// from https://docs.nvidia.com/cuda/samples/6_Advanced/reduction/doc/reduction.pdf
-// TODO edit to handle struct/tree
-template <unsigned int blockSize>
-__device__ void warpReduce(volatile int *sdata, unsigned int tid) {
-  if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
-  if (blockSize >= 32) sdata[tid] += sdata[tid + 16];
-  if (blockSize >= 16) sdata[tid] += sdata[tid + 8];
-  if (blockSize >= 8) sdata[tid] += sdata[tid + 4];
-  if (blockSize >= 4) sdata[tid] += sdata[tid + 2];
-  if (blockSize >= 2) sdata[tid] += sdata[tid + 1];
-}
-
-template <unsigned int blockSize>
-__global__ void reduce6(int *g_idata, int *g_odata, unsigned int n){
-  extern __shared__ int sdata[];
-  unsigned int tid = threadIdx.x;
-  unsigned int i = blockIdx.x * (blockSize * 2) + tid;
-  unsigned int gridSie = blockSize * 2 * gridDim.x;
-  sdata[tid] = 0;
-
-  while (i < n) { sdata[tid] += g_idata[i] + g_idata[i + blockSize]; i += gridSie; }
-  __syncthreads();
-
-  if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } __syncthreads(); }
-  if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } __syncthreads(); }
-  if (blockSize >= 128) { if (tid < 64) { sdata[tid] += sdata[tid + 64]; } __syncthreads(); }
-
-  //if(tid < 32) warpReduce(sdata, tid);
-  if(tid == 0 ) g_odata[blockIdx.x] = sdata[0];
-}
-// end from
-
-__global__ void reduce(edge_t* src, edge_t* dest, int ne){
+//k is the number of edges originally
+//half is the new number of edges. which is half of e rounded up
+__global__ void reduce(edge_t* src, edge_t* dest, int e, int half){
   // Thread id
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (tid >= ne) return;
-
+  if (tid >= half) return;
   edge_t* left = &src[tid * 2];
   edge_t* right = left + 1;
-  edge_t* d = &dest[tid];
-  //*(dest[tid]) = ((left->distance < right->distance) ? (*left) : (*right));
-  if(left->distance < right->distance){
-    d->tree1 = left->tree1;
-    d->tree2 = left->tree2;
-    d->distance = left->distance;
+//  printf("%f %f %f first %d\n", left->distance, right->distance, (dest[tid]).distance, right == src + e);
+  
+  if (right == src + e) {
+//      printf("weird\n");
+      memcpy((void*) &dest[tid], (const void*) left, 8);
   }
   else {
-    d->tree1 = right->tree1;
-    d->tree2 = right->tree2;
-    d->distance = right->distance;
+    memcpy((void*) &dest[tid], (const void*) ((left->distance < right->distance)) ? left : right, 8);
   }
+//  printf("%f %f %f\n", left->distance, right->distance, (dest[tid]).distance);
 }
 
 // Calculates x position in matrix
-__device__ void calcXPos(unsigned short *x, int adjIndex, float adjN){
-  *x = (unsigned short)(floor(adjN - sqrt(pow(adjN, 2) - adjIndex)));
+__device__ void calcXPos(unsigned short *x, int adjIndex, float adjN, float adjN2){
+  *x = (unsigned short)(floor(adjN - sqrt(adjN2 - adjIndex)));
 }
 
 // Calculates y position in matrix
@@ -73,130 +40,114 @@ __device__ void calcYPos(unsigned short *y, int adjIndex, float adjN, int x){
   *y = (unsigned short)(adjIndex + (x * (x + adjN)) / 2);
 }
 
-// Calculates index in array from position in matrix
-__device__ void calcArrayIndex(int *index, int adjN, int adjY, int x){
-  *index = (int)((x * (adjN - x) + adjY) / 2);
-}
-
 // Calculate the position in the matrix
-__device__ void calcPosInMatrix(int index, int n, unsigned short *x, unsigned short *y){
-  calcXPos(x, index * 2, n - (.5f));
-  calcYPos(y, index + 1, 3 - 2 * n, *x);
+__device__ void calcPosInMatrix(int index, unsigned short *x, unsigned short *y, float adjNX, float adjNX2, int adjNY){
+  calcXPos(x, 2 * index, adjNX, adjNX2);
+  calcYPos(y, index + 1, adjNY, *x);
 }
 
 // Calcuate edges between all points
-__global__ void calculateEdge(edge_t* edges, point_t* points, int n){
+__global__ void calculateEdge(edge_t* edges, point_t* points, int e, float adjNX, float adjNX2, int adjNY){
   // Thread id
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (tid >= (n * n - n) / 2) return;
+  if (tid >= e) return;
 
-  edge_t *e = &edges[tid];
-  calcPosInMatrix(tid, n, &(e->tree1), &(e->tree2));
-  point_t *xp = &points[(e->tree1)];
-  point_t *yp = &points[(e->tree2)];
+  edge_t *edge = &edges[tid];
+  calcPosInMatrix(tid, &(edge->tree1), &(edge->tree2), adjNX, adjNX2, adjNY);
+  point_t *xp = &points[(edge->tree1)];
+  point_t *yp = &points[(edge->tree2)];
 
   float sum = 0;
   for (int i = 0; i < DIM; i++) {
     float delta = xp->coordinates[i] - yp->coordinates[i];
     sum += delta * delta;
   }
-  e->distance = sqrt(sum);
-  printf("tid: %d - e->1: %d - e->2: %d - e->d: %f\n\txp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f\n",
-          tid, e->tree1, e->tree2, e->distance, xp->coordinates[0], xp->coordinates[1], yp->coordinates[0], yp->coordinates[1]);
+  edge->distance = sqrt(sum);
+//  printf("tid: %d - edge->1: %d - edge->2: %d - edge->d: %f xp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f\n",
+//          tid, edge->tree1, edge->tree2, edge->distance, xp->coordinates[0], xp->coordinates[1], yp->coordinates[0], yp->coordinates[1]);
+}
+
+__global__ void updateTree1(edge_t* edges, int e, unsigned short o, unsigned short n) {
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (tid >= e) return;
+  edge_t* edge = &edges[tid];
+  if (edge->tree1 == o)
+    edge->tree1 = n;
+}
+__global__ void updateTree2(edge_t* edges, int e, unsigned short o, unsigned short n) {
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (tid >= e) return;
+  edge_t* edge = &edges[tid];
+  if (edge->tree2 == o)
+    edge->tree2 = n;
+}
+
+__global__ void updateDistance(edge_t* edges, int e) {
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (tid >= e) return;
+  edge_t* edge = &edges[tid];
+  if (edge->tree1 == edge->tree2) {
+    edge->distance = 1/0.;
+  }
 }
 
 // main duh
 int main(int argc, char **argv) {
 
-  cudaThreadSynchronize();
-
-  if( find_option( argc, argv, "-h" ) >= 0 )
-  {
-      printf( "Options:\n" );
-      printf( "-h to see this help\n" );
-      printf( "-n <int> to set the number of particles\n" );
-      printf( "-o <filename> to specify the output file name\n" );
-      printf( "-s <filename> to specify the summary output file name\n" );
-      return 0;
-  }
-
   int n = read_int(argc, argv, "-n", 1000);
+  int e = n *(n-1)/2;
 
-  char *savename = read_string(argc, argv, "-o", NULL);
-  char *sumname = read_string(argc, argv, "-s", NULL);
-
-  FILE *fsave = savename ? fopen(savename, "w") : NULL;
-  FILE *fsum = sumname ? fopen(sumname, "a") : NULL;
-
-  ///int n = 3;
-
-  // GPU point data tructure
-  edge_t * d_edges;
-  cudaMalloc((void **) &d_edges, 7 * (n * n - n));
-  // GPU point data structure
+  //pointers
+  edge_t* d_edges;
+  cudaMalloc((void **) &d_edges, 7 * (n * n - n)+ 16);
   point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n));
   edge_t* half = (edge_t*)d_points;
-  edge_t* quarter = (edge_t*)(((void*)half) + 2 * (n * n - n));
+  edge_t* quarter = (edge_t*)(((void*)half) + 2 * (n * n - n) + 8);
+  edge_t* smallest = (edge_t*)malloc(sizeof(edge_t));
 
-  double init_time = read_timer();
-  // Initialize points
+  //curand
   curandGenerator_t gen; // Random number generator
   curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT); // Initialize generator
   curandSetPseudoRandomGeneratorSeed(gen, time(NULL)); // Set generator's seed
-  curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
 
-  // Initialize edges
-  calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, n);
+  //adjusted values
+  float adjNX = n - .5f;
+  float adjNX2 = adjNX * adjNX;
+  int adjNY = 3 - 2*n;
 
-  cudaThreadSynchronize();
-  init_time = read_timer() - init_time;
-  double reduce_time = read_timer();
-
-  // Reduce tree
-  edge_t* smallest = (edge_t*)malloc(sizeof(edge_t));
-  for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
-    int numEdgesRed = (n * n - n) / 2;
-    reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed);
-    for(; numEdgesRed >= 4; numEdgesRed /= 4){
-      reduce <<< NUM_BLOCKS, NUM_THREADS >>> (half, quarter, numEdgesRed / 2);
-      reduce <<< NUM_BLOCKS, NUM_THREADS >>> (quarter, half, numEdgesRed / 4);
+  float sum = 0;
+  for (int i = 0; i < 1000 ; i++) {
+    curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
+    calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, e, adjNX, adjNX2, adjNY);
+    for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
+      cudaThreadSynchronize();
+      int numEdgesRed = e;
+//      printf("%d %d\n", numEdgesRed, (numEdgesRed + 1) / 2);
+      reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed, (numEdgesRed + 1) / 2);
+      numEdgesRed = (numEdgesRed + 1) / 2;
+      while(numEdgesRed > 1){
+        cudaThreadSynchronize();
+//        printf("%d %d\n", numEdgesRed, (numEdgesRed + 1) / 2);
+        reduce <<< NUM_BLOCKS, NUM_THREADS >>> (half, quarter, numEdgesRed, (numEdgesRed + 1) / 2);
+        numEdgesRed = (numEdgesRed + 1) / 2;
+        cudaThreadSynchronize();
+//        printf("%d %d\n", numEdgesRed, (numEdgesRed + 1) / 2);
+        reduce <<< NUM_BLOCKS, NUM_THREADS >>> (quarter, half, numEdgesRed, (numEdgesRed + 1) / 2);
+        numEdgesRed = (numEdgesRed + 1) / 2;
+      }
+      cudaMemcpy((void*)smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
+//      printf("Smallest %d from %d to %d: %f\n", numEdgesSel, smallest->distance, smallest->tree1, smallest->tree2);
+      sum += smallest->distance;
+      int tree1 = smallest->tree1;
+      updateTree1 <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, tree1, smallest->tree2);
+      updateTree2 <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, tree1, smallest->tree2);
+      updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e);
     }
-
-    if(numEdgesRed == 3){ // 3 elements in half
-      reduce <<< 1, 1 >>> (half + 1, half + 1, 2);
-    }
-    if(numEdgesRed == 2){ // 2 elements in half
-      reduce <<< 1, 1 >>> (half, half, 2);
-    }
-    cudaMemcpy((void*)smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
-    printf("Smallest %d: %f\n", numEdgesSel, smallest->distance);
-    break;
   }
-
-  cudaThreadSynchronize();
-  reduce_time = read_timer() - reduce_time;
-
-  printf("Initialization time = %g seconds\n", init_time);
-  printf("n = %d, Reduction time = %g seconds\n", n, reduce_time);
-
-  /*
-  if (fsum)
-  {
-    fprintf(fsum, "%d %lf \n", n, reduce_time);
-  }
-
-  if (fsum)
-  {
-    fclose(fsum);
-  }
-  */
-
+  printf("sum %f\n", sum/1000);
   cudaFree(d_edges);
-
-  if (fsave)
-  {
-    fclose(fsave);
-  }
-
+  free(smallest);
+  //destroy generator
   return 0;
 }
+

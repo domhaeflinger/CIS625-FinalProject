@@ -4,6 +4,12 @@
 #SBATCH -o gpu.stdout
 #SBATCH -n 1
 #SBATCH -p gpudev
-#SBATCH -t 00:10:00
+#SBATCH -t 00:30:00
 
-ibrun ./gpu -n 4
+ibrun ./gpu -n 10
+ibrun ./gpu -n 20
+ibrun ./gpu -n 50
+ibrun ./gpu -n 100
+ibrun ./gpu -n 200
+
+
