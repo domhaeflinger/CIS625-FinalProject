@@ -67,13 +67,15 @@ __global__ void calculateEdge(edge_t* edges, point_t* points, int e, float adjNX
 //          tid, edge->tree1, edge->tree2, edge->distance, xp->coordinates[0], xp->coordinates[1], yp->coordinates[0], yp->coordinates[1]);
 }
 
-__global__ void updateTree1(edge_t* edges, int e, unsigned short o, unsigned short n) {
+__global__ void updateTree(edge_t* edges, int e, unsigned short o, unsigned short n) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (tid >= e) return;
-  edge_t* edge = &edges[tid];
-  if (edge->tree1 == o)
-    edge->tree1 = n;
+  if (tid >= 2 * e) return;
+  edge_t* edge = &edges[tid%e];
+  unsigned short *tree = (tid > e) ? &edge->tree1 : &edge->tree2;
+  if (*tree == o)
+    *tree = n;
 }
+
 __global__ void updateTree2(edge_t* edges, int e, unsigned short o, unsigned short n) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid >= e) return;
@@ -138,9 +140,7 @@ int main(int argc, char **argv) {
       cudaMemcpy((void*)smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
 //      printf("Smallest %d from %d to %d: %f\n", numEdgesSel, smallest->distance, smallest->tree1, smallest->tree2);
       sum += smallest->distance;
-      int tree1 = smallest->tree1;
-      updateTree1 <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, tree1, smallest->tree2);
-      updateTree2 <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, tree1, smallest->tree2);
+      updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, smallest->tree1, smallest->tree2);
       updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e);
     }
   }
