@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
   point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n));
   edge_t* half = (edge_t*)d_points;
   edge_t* quarter = (edge_t*)(((void*)half) + 2 * (n * n - n) + 8);
-  edge_t* smallest = (edge_t*)malloc(sizeof(edge_t));
+  edge_t smallest;
 
   //curand
   curandGenerator_t gen; // Random number generator
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
         reduce <<< NUM_BLOCKS, NUM_THREADS >>> (quarter, half, numEdgesRed, (numEdgesRed + 1) / 2);
         numEdgesRed = (numEdgesRed + 1) / 2;
       }
-      cudaMemcpy((void*)smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
+      cudaMemcpy((void*)&smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
 //      printf("Smallest %d from %d to %d: %f\n", numEdgesSel, smallest->distance, smallest->tree1, smallest->tree2);
       sum += smallest->distance;
       updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, smallest->tree1, smallest->tree2);
