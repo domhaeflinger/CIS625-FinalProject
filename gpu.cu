@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
   }
   printf("sum %f\n", sum/1000);
   cudaFree(d_edges);
-  //destroy generator
+  curandDestroyGenerator(gen);
   return 0;
 }
 
