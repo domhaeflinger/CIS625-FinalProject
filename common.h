@@ -1,4 +1,4 @@
-// Joshua Donnoe, Kyle Evens, and Dominik Haeflinger
+// Joshua Donnoe, Kyle Evans, and Dominik Haeflinger
 
 #ifndef COMMON_H
 #define COMMON_H
