@@ -139,14 +139,13 @@ int main(int argc, char **argv) {
       }
       cudaMemcpy((void*)&smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
 //      printf("Smallest %d from %d to %d: %f\n", numEdgesSel, smallest->distance, smallest->tree1, smallest->tree2);
-      sum += smallest->distance;
-      updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, smallest->tree1, smallest->tree2);
+      sum += smallest.distance;
+      updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, smallest.tree1, smallest.tree2);
       updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e);
     }
   }
   printf("sum %f\n", sum/1000);
   cudaFree(d_edges);
-  free(smallest);
   //destroy generator
   return 0;
 }
