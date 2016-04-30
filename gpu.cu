@@ -19,7 +19,7 @@ __global__ void reduce(edge_t* src, edge_t* dest, int e, int half){
   edge_t* left = &src[tid * 2];
   edge_t* right = left + 1;
 //  printf("%f %f %f first %d\n", left->distance, right->distance, (dest[tid]).distance, right == src + e);
-  
+
   if (right == src + e) {
 //      printf("weird\n");
       memcpy((void*) &dest[tid], (const void*) left, 8);
@@ -54,8 +54,8 @@ __global__ void calculateEdge(edge_t* edges, point_t* points, int e, float adjNX
 
   edge_t *edge = &edges[tid];
   calcPosInMatrix(tid, &(edge->tree1), &(edge->tree2), adjNX, adjNX2, adjNY);
-  point_t *xp = &points[(edge->tree1)];
-  point_t *yp = &points[(edge->tree2)];
+  point_t *xp = &points[(edge->tree1)]; // point at x value
+  point_t *yp = &points[(edge->tree2)]; // point at y value
 
   float sum = 0;
   for (int i = 0; i < DIM; i++) {
@@ -118,6 +118,7 @@ int main(int argc, char **argv) {
   int adjNY = 3 - 2*n;
 
   float sum = 0;
+  // Perform calculations 1000 times
   for (int i = 0; i < 1000 ; i++) {
     curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
     calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, e, adjNX, adjNX2, adjNY);
@@ -145,8 +146,8 @@ int main(int argc, char **argv) {
     }
   }
   printf("sum %f\n", sum/1000);
+  // Clean-up
   cudaFree(d_edges);
   curandDestroyGenerator(gen);
   return 0;
 }
-
