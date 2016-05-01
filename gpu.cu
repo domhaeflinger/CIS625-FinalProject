@@ -8,7 +8,7 @@
 #include "common.h"
 
 //#define vertices 1000
-#define E //(vertices * (vertices-1) / 2)
+#define E 0 //(vertices * (vertices-1) / 2)
 #define NUM_BLOCKS ceil(E/256)
 #define NUM_THREADS 256
 
