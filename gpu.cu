@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
   int N = read_int(argc, argv, "-N", 1000);
   int E = N * (N-1)/2;
-  int NUM_BLOCKS = ceil(E / 256);
+  int NUM_BLOCKS = ceil(E / 256.);
 
   //pointers
   edge_t* d_edges;
