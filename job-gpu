@@ -6,10 +6,8 @@
 #SBATCH -p gpudev
 #SBATCH -t 00:30:00
 
-ibrun ./gpu -n 10
-ibrun ./gpu -n 20
-ibrun ./gpu -n 50
-ibrun ./gpu -n 100
-ibrun ./gpu -n 200
-
-
+ibrun ./gpu -N 10
+ibrun ./gpu -N 20
+ibrun ./gpu -N 50
+ibrun ./gpu -N 100
+ibrun ./gpu -N 200
