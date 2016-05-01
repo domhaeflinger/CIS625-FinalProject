@@ -7,8 +7,8 @@
 #include <curand_kernel.h>
 #include "common.h"
 
-#define vertices 1000
-#define E (vertices * (vertices-1) / 2)
+//#define vertices 1000
+#define E //(vertices * (vertices-1) / 2)
 #define NUM_BLOCKS ceil(E/256)
 #define NUM_THREADS 256
 
@@ -101,7 +101,7 @@ __global__ void updateDistance(edge_t* edges, int e) {
 int main(int argc, char **argv) {
 
   int n = read_int(argc, argv, "-n", 1000);
-  int e = n *(n-1)/2;
+  E = n *(n-1)/2;
 
   //pointers
   edge_t* d_edges;
@@ -125,12 +125,12 @@ int main(int argc, char **argv) {
   // Perform calculations 1000 times
   for (int i = 0; i < 1000 ; i++) {
     curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
-    calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, e, adjNX, adjNX2, adjNY);
+    calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, E, adjNX, adjNX2, adjNY);
 
     for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
       cudaThreadSynchronize();
 
-      int numEdgesRed = e;
+      int numEdgesRed = E;
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed, (numEdgesRed + 1) / 2);
       numEdgesRed = (numEdgesRed + 1) / 2;
 
@@ -149,8 +149,8 @@ int main(int argc, char **argv) {
       cudaMemcpy((void*)&smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
       sum += smallest.distance;
 
-      updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, smallest.tree1, smallest.tree2);
-      updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e);
+      updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, E, smallest.tree1, smallest.tree2);
+      updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, E);
     }
   }
 
