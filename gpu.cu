@@ -7,9 +7,6 @@
 #include <curand_kernel.h>
 #include "common.h"
 
-#define vertices 1000
-#define E (vertices * (vertices-1) / 2)
-#define NUM_BLOCKS ceil(E/256)
 #define NUM_THREADS 256
 
 //k is the number of edges originally
@@ -101,7 +98,8 @@ __global__ void updateDistance(edge_t* edges, int e) {
 int main(int argc, char **argv) {
 
   int n = read_int(argc, argv, "-n", 1000);
-  int e = n *(n-1)/2;
+  int e = n * (n-1)/2;
+  int NUM_BLOCKS = ceil(e / 256);
 
   //pointers
   edge_t* d_edges;
