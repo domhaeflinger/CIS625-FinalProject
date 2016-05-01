@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
   const int N = read_int(argc, argv, "-n", 1000);
   const int E = N * (N-1)/2;
-  const int NUM_BLOCKS = ceil(e / 256);
+  const int NUM_BLOCKS = ceil(E / 256);
 
   //pointers
   edge_t* d_edges;
