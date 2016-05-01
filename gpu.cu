@@ -7,6 +7,7 @@
 #include <curand_kernel.h>
 #include "common.h"
 
+#define INFINITY 1/0.
 #define NUM_THREADS 256
 
 //k is the number of edges originally
@@ -90,7 +91,7 @@ __global__ void updateDistance(edge_t* edges, int e) {
 
   edge_t* edge = &edges[tid];
   if (edge->tree1 == edge->tree2) {
-    edge->distance = 1/0.;
+    edge->distance = INFINITY;
   }
 }
 
