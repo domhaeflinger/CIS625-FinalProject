@@ -16,18 +16,16 @@ __global__ void reduce(edge_t* src, edge_t* dest, int e, int half){
   // Thread id
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid >= half) return;
+
   edge_t* left = &src[tid * 2];
   edge_t* right = left + 1;
-//  printf("%f %f %f first %d\n", left->distance, right->distance, (dest[tid]).distance, right == src + e);
 
   if (right == src + e) {
-//      printf("weird\n");
-      memcpy((void*) &dest[tid], (const void*) left, 8);
+    memcpy((void*) &dest[tid], (const void*) left, 8);
   }
   else {
     memcpy((void*) &dest[tid], (const void*) ((left->distance < right->distance)) ? left : right, 8);
   }
-//  printf("%f %f %f\n", left->distance, right->distance, (dest[tid]).distance);
 }
 
 // Calculates x position in matrix
@@ -63,30 +61,34 @@ __global__ void calculateEdge(edge_t* edges, point_t* points, int e, float adjNX
     sum += delta * delta;
   }
   edge->distance = sqrt(sum);
-//  printf("tid: %d - edge->1: %d - edge->2: %d - edge->d: %f xp->x: %f - xp->y: %f - yp->x: %f - yp->y: %f\n",
-//          tid, edge->tree1, edge->tree2, edge->distance, xp->coordinates[0], xp->coordinates[1], yp->coordinates[0], yp->coordinates[1]);
 }
 
 __global__ void updateTree(edge_t* edges, int e, unsigned short o, unsigned short n) {
+  // Thread id
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid >= 2 * e) return;
+
   edge_t* edge = &edges[tid%e];
   unsigned short *tree = (tid > e) ? &edge->tree1 : &edge->tree2;
-  if (*tree == o)
+  if (*tree == o) {
     *tree = n;
+  }
 }
 
 __global__ void updateTree2(edge_t* edges, int e, unsigned short o, unsigned short n) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid >= e) return;
+
   edge_t* edge = &edges[tid];
-  if (edge->tree2 == o)
+  if (edge->tree2 == o) {
     edge->tree2 = n;
+  }
 }
 
 __global__ void updateDistance(edge_t* edges, int e) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid >= e) return;
+
   edge_t* edge = &edges[tid];
   if (edge->tree1 == edge->tree2) {
     edge->distance = 1/0.;
@@ -122,29 +124,34 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 1000 ; i++) {
     curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
     calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, e, adjNX, adjNX2, adjNY);
+
     for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
       cudaThreadSynchronize();
+
       int numEdgesRed = e;
-//      printf("%d %d\n", numEdgesRed, (numEdgesRed + 1) / 2);
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed, (numEdgesRed + 1) / 2);
       numEdgesRed = (numEdgesRed + 1) / 2;
+
       while(numEdgesRed > 1){
         cudaThreadSynchronize();
-//        printf("%d %d\n", numEdgesRed, (numEdgesRed + 1) / 2);
+
         reduce <<< NUM_BLOCKS, NUM_THREADS >>> (half, quarter, numEdgesRed, (numEdgesRed + 1) / 2);
         numEdgesRed = (numEdgesRed + 1) / 2;
+
         cudaThreadSynchronize();
-//        printf("%d %d\n", numEdgesRed, (numEdgesRed + 1) / 2);
+
         reduce <<< NUM_BLOCKS, NUM_THREADS >>> (quarter, half, numEdgesRed, (numEdgesRed + 1) / 2);
         numEdgesRed = (numEdgesRed + 1) / 2;
       }
+
       cudaMemcpy((void*)&smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
-//      printf("Smallest %d from %d to %d: %f\n", numEdgesSel, smallest->distance, smallest->tree1, smallest->tree2);
       sum += smallest.distance;
+
       updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, smallest.tree1, smallest.tree2);
       updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e);
     }
   }
+
   printf("sum %f\n", sum/1000);
   // Clean-up
   cudaFree(d_edges);
