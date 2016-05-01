@@ -97,16 +97,16 @@ __global__ void updateDistance(edge_t* edges, int e) {
 // main duh
 int main(int argc, char **argv) {
 
-  int n = read_int(argc, argv, "-n", 1000);
-  int e = n * (n-1)/2;
-  int NUM_BLOCKS = ceil(e / 256);
+  const int N = read_int(argc, argv, "-n", 1000);
+  const int E = N * (N-1)/2;
+  const int NUM_BLOCKS = ceil(e / 256);
 
   //pointers
   edge_t* d_edges;
-  cudaMalloc((void **) &d_edges, 7 * (n * n - n)+ 16);
-  point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (n * n - n));
+  cudaMalloc((void **) &d_edges, 7 * (N * N - N)+ 16);
+  point_t * d_points = (point_t *)(((void *) d_edges) + 4 * (N * N - N));
   edge_t* half = (edge_t*)d_points;
-  edge_t* quarter = (edge_t*)(((void*)half) + 2 * (n * n - n) + 8);
+  edge_t* quarter = (edge_t*)(((void*)half) + 2 * (N * N - N) + 8);
   edge_t smallest;
 
   //curand
@@ -115,20 +115,20 @@ int main(int argc, char **argv) {
   curandSetPseudoRandomGeneratorSeed(gen, time(NULL)); // Set generator's seed
 
   //adjusted values
-  float adjNX = n - .5f;
+  float adjNX = N - .5f;
   float adjNX2 = adjNX * adjNX;
-  int adjNY = 3 - 2*n;
+  int adjNY = 3 - 2*N;
 
   float sum = 0;
   // Perform calculations 1000 times
   for (int i = 0; i < 1000 ; i++) {
-    curandGenerateUniform(gen, (float*)d_points, n * DIM); // Generate n random numbers in d_points
-    calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, e, adjNX, adjNX2, adjNY);
+    curandGenerateUniform(gen, (float*)d_points, N * DIM); // Generate n random numbers in d_points
+    calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, E, adjNX, adjNX2, adjNY);
 
-    for (int numEdgesSel = n - 1; numEdgesSel-- > 0;) {
+    for (int numEdgesSel = N - 1; numEdgesSel-- > 0;) {
       cudaThreadSynchronize();
 
-      int numEdgesRed = e;
+      int numEdgesRed = E;
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed, (numEdgesRed + 1) / 2);
       numEdgesRed = (numEdgesRed + 1) / 2;
 
@@ -147,8 +147,8 @@ int main(int argc, char **argv) {
       cudaMemcpy((void*)&smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
       sum += smallest.distance;
 
-      updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e, smallest.tree1, smallest.tree2);
-      updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, e);
+      updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, E, smallest.tree1, smallest.tree2);
+      updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, E);
     }
   }
 
