@@ -7,7 +7,9 @@
 #include <curand_kernel.h>
 #include "common.h"
 
-#define NUM_BLOCKS 256
+#define vertices 1000
+#define E (vertices * (vertices-1) / 2)
+#define NUM_BLOCKS ceil(E/256)
 #define NUM_THREADS 256
 
 //k is the number of edges originally
