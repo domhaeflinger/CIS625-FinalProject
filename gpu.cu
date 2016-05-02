@@ -63,6 +63,7 @@ __global__ void calculateEdge(edge_t* edges, point_t* points, int e, float adjNX
   edge->distance = sqrt(sum);
 }
 
+// Updates the thread edge to use the smallest edge
 __global__ void updateTree(edge_t* edges, int e, unsigned short o, unsigned short n) {
   // Thread id
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -75,6 +76,7 @@ __global__ void updateTree(edge_t* edges, int e, unsigned short o, unsigned shor
   }
 }
 
+// Depriciated
 __global__ void updateTree2(edge_t* edges, int e, unsigned short o, unsigned short n) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid >= e) return;
@@ -85,6 +87,7 @@ __global__ void updateTree2(edge_t* edges, int e, unsigned short o, unsigned sho
   }
 }
 
+// Updates the distance of the thread edge to infinity if it creates a cycle
 __global__ void updateDistance(edge_t* edges, int e) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid >= e) return;
@@ -126,6 +129,7 @@ int main(int argc, char **argv) {
     curandGenerateUniform(gen, (float*)d_points, N * DIM); // Generate n random numbers in d_points
     calculateEdge <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, d_points, E, adjNX, adjNX2, adjNY);
 
+    // Begin Kruskal's algorithm
     for (int numEdgesSel = N - 1; numEdgesSel-- > 0;) {
       cudaThreadSynchronize();
 
@@ -133,6 +137,7 @@ int main(int argc, char **argv) {
       reduce <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, half, numEdgesRed, (numEdgesRed + 1) / 2);
       numEdgesRed = (numEdgesRed + 1) / 2;
 
+      // Reduce until 1 edge remains
       while(numEdgesRed > 1){
         cudaThreadSynchronize();
 
@@ -145,9 +150,11 @@ int main(int argc, char **argv) {
         numEdgesRed = (numEdgesRed + 1) / 2;
       }
 
+      // Bring the smallest edge back to host and add the distance locally
       cudaMemcpy((void*)&smallest, (const void*)half, sizeof(edge_t), cudaMemcpyDeviceToHost);
       sum += smallest.distance;
 
+      // Update the tree and distances
       updateTree <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, E, smallest.tree1, smallest.tree2);
       updateDistance <<< NUM_BLOCKS, NUM_THREADS >>> (d_edges, E);
     }
